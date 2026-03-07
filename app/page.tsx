@@ -45,9 +45,7 @@ export default function HiveMindApp() {
   // Chat States
   const [chatMessage, setChatMessage] = useState("");
   const [messages, setMessages] = useState([
-    { id: 1, text: "Vetoing B – nuts allergy", sender: "Guest", isMe: false, initials: "GU", time: "12:01" },
-    { id: 2, text: "Option C has great reviews", sender: "PC", isMe: false, initials: "PC", time: "12:03" },
-    { id: 3, text: "Let's go with A", sender: "Unknown", isMe: false, initials: "UN", time: "12:05" },
+    { id: 1, text: "Wait for backend to connect...", sender: "System", isMe: false, initials: "HM", time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
   ]);
 
   // --- Real-time Hooks ---
@@ -69,13 +67,14 @@ export default function HiveMindApp() {
     return () => clearInterval(interval);
   }, [phase, consensus]);
 
-  // --- Mock User Merging ---
+  // --- User / Connection Management ---
   const myUser: ExtendedUser = { id: "me", name: myName || "User", vote: myVote, isHost, initials: (myName || "U").substring(0, 2).toUpperCase() };
-  const mockUsers: ExtendedUser[] = [
-    { id: "mock-1", name: "PC", vote: "Option A", isHost: true, initials: "PC" },
-    { id: "mock-2", name: "Guest", vote: null, isHost: false, initials: "GU" }
-  ];
-  const displayUsers: ExtendedUser[] = phase === 'home' ? [] : [myUser, ...mockUsers];
+
+  // NOTE: This array currently just holds `myUser` for local client-side testing. 
+  // Once the socket.io backend is wired up, `displayUsers` should map over the 
+  // `useHiveStore().users` global array broadcasted from the server.
+  const displayUsers: ExtendedUser[] = phase === 'home' ? [] : [myUser];
+
   const MAX_USERS = 10;
   const allVoted = displayUsers.length > 0 && displayUsers.every(u => u.vote !== null);
 
@@ -295,7 +294,7 @@ export default function HiveMindApp() {
         `}>
           <div className="p-4 border-b border-hive-yellow-base/20 flex items-center justify-between bg-hive-card/80 backdrop-blur">
             <h3 className="font-bold text-hive-yellow-base flex items-center gap-2 drop-shadow-[0_0_5px_rgba(255,221,0,0.3)]">
-              <Hexagon size={18} fill="currentColor" className="text-hive-yellow-neon animate-pulse" /> Hive Chat
+              <MessageSquare size={18} /> Hive Chat
             </h3>
             <button onClick={() => setShowSidebar(false)} className="text-gray-400 hover:text-hive-red-neon transition-colors p-1 rounded-full hover:bg-white/5">
               <X size={20} />
@@ -303,6 +302,7 @@ export default function HiveMindApp() {
           </div>
 
           <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 scrollbar-thin scrollbar-thumb-hive-red-neon/30 hover:scrollbar-thumb-hive-red-neon/50">
+            {/* Note: Mapped to global messages array when socket is wired */}
             {messages.map((msg) => (
               <div key={msg.id} className={`flex gap-3 max-w-[85%] ${msg.isMe ? 'self-end flex-row-reverse' : 'self-start'}`}>
                 <div className={`
@@ -411,8 +411,6 @@ export default function HiveMindApp() {
   );
 
   const renderWaitingRoom = () => {
-    const emptySlotsCount = Math.max(0, MAX_USERS - displayUsers.length);
-
     return (
       <div className="flex flex-col min-h-screen">
         {renderHeader()}
@@ -436,7 +434,7 @@ export default function HiveMindApp() {
                     >
                       <div className={`
                         w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center font-bold bg-hive-card transition-colors
-                        ${isMe ? 'border-2 border-hive-yellow-neon shadow-[0_0_12px_rgba(255,234,0,0.6)] text-hive-yellow-neon text-lg md:text-xl' : 'border-2 border-hive-yellow-base text-hive-yellow-base text-base md:text-lg shadow-[0_0_10px_rgba(255,221,0,0.1)]'}
+                        ${isMe ? 'border-2 border-hive-yellow-neon shadow-[0_0_12px_rgba(255,234,0,0.6)] text-lg md:text-xl' : 'border-2 border-hive-yellow-base text-hive-yellow-base text-base md:text-lg shadow-[0_0_10px_rgba(255,221,0,0.1)]'}
                       `}>
                         {u.initials}
                       </div>
@@ -458,11 +456,12 @@ export default function HiveMindApp() {
                 })}
               </AnimatePresence>
 
-              {Array(emptySlotsCount).fill(0).map((_, i) => (
-                <div key={`empty-${i}`} className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center opacity-40">
+              {/* Show exactly ONE dashed placeholder if there's room */}
+              {displayUsers.length < MAX_USERS && (
+                <div title="Invite More" className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center opacity-40">
                   <Plus className="text-white/20" size={20} />
                 </div>
-              ))}
+              )}
             </div>
 
             <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-wide">
