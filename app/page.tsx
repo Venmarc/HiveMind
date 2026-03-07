@@ -480,7 +480,7 @@ export default function HiveMindApp() {
               </AnimatePresence>
 
               {showInviteSlot && (
-                <div title="Invite Subjects" className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center opacity-40 hover:opacity-100 hover:border-hive-yellow-base/50 transition-all cursor-help group">
+                <div title="Invite Members" className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center opacity-40 hover:opacity-100 hover:border-hive-yellow-base/50 transition-all cursor-help group">
                   <Plus className="text-white/30 group-hover:text-hive-yellow-base/50 transition-colors" size={20} />
                 </div>
               )}
@@ -504,7 +504,7 @@ export default function HiveMindApp() {
               `}
             >
               {isHost ? (
-                displayUsers.length >= 2 ? "Initiate Sync Protocol" : "Waiting for subjects..."
+                displayUsers.length >= 2 ? "Initiate Sync Protocol" : "Waiting for members..."
               ) : (
                 "Waiting for Host..."
               )}
@@ -514,7 +514,7 @@ export default function HiveMindApp() {
             </button>
 
             {isHost && displayUsers.length < 2 && (
-              <p className="mt-4 text-xs text-hive-red-neon uppercase tracking-wide">Requires minimum 2 subjects</p>
+              <p className="mt-4 text-xs text-hive-red-neon uppercase tracking-wide">Requires minimum 2 members</p>
             )}
           </div>
         </div>
