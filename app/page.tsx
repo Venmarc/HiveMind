@@ -38,6 +38,14 @@ export default function HiveMindApp() {
   const [showModal, setShowModal] = useState(false);
   const [showSidebar, setShowSidebar] = useState(false);
 
+  // Chat States
+  const [chatMessage, setChatMessage] = useState("");
+  const [messages, setMessages] = useState([
+    { id: 1, text: "Vetoing B – nuts allergy", sender: "Guest", isMe: false, initials: "GU", time: "12:01" },
+    { id: 2, text: "Option C has great reviews", sender: "PC", isMe: false, initials: "PC", time: "12:03" },
+    { id: 3, text: "Let's go with A", sender: "Unknown", isMe: false, initials: "UN", time: "12:05" },
+  ]);
+
   // --- Real-time Hooks (Placeholder / Setup) ---
   useEffect(() => {
     socket = io();
@@ -224,26 +232,127 @@ export default function HiveMindApp() {
     </nav>
   );
 
-  const renderSidebar = () => (
-    <div className={`fixed right-0 top-[73px] bottom-0 w-80 bg-hive-card border-l border-hive-yellow-base/10 transform transition-transform duration-300 z-20 ${showSidebar ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
-      <div className="p-4 border-b border-white/5 flex items-center justify-between">
-        <h3 className="font-bold text-hive-yellow-base flex items-center gap-2"><MessageSquare size={18} /> Hive Chat</h3>
-        <button onClick={() => setShowSidebar(false)} className="text-gray-400 hover:text-white"><X size={18} /></button>
-      </div>
-      <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3">
-        <div className="bg-black/40 p-3 rounded-xl rounded-tl-none border border-white/5">
-          <span className="text-xs text-hive-yellow-base font-bold mb-1 block">PC (Host)</span>
-          <p className="text-sm text-gray-300">Let&apos;s try to reach consensus quickly.</p>
+  const renderSidebar = () => {
+    const handleSendMessage = (e?: React.FormEvent) => {
+      e?.preventDefault();
+      if (!chatMessage.trim()) return;
+
+      const newMsg = {
+        id: Date.now(),
+        text: chatMessage,
+        sender: myName || "Me",
+        isMe: true,
+        initials: myUser.initials,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+
+      setMessages([...messages, newMsg]);
+      setChatMessage("");
+    };
+
+    return (
+      <>
+        {/* Mobile Backdrop overlay */}
+        <AnimatePresence>
+          {showSidebar && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowSidebar(false)}
+              className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Sidebar Container */}
+        <div
+          className={`
+            fixed top-0 md:top-[73px] bottom-0 right-0 
+            w-full md:w-80 lg:w-96 bg-hive-card 
+            border-l border-hive-yellow-base/10 
+            transform transition-transform duration-300 z-40 flex flex-col
+            shadow-[-10px_0_30px_rgba(0,0,0,0.5)]
+            ${showSidebar ? 'translate-x-0' : 'translate-x-full'}
+          `}
+        >
+          {/* Header */}
+          <div className="p-4 border-b border-hive-yellow-base/20 flex items-center justify-between bg-hive-card/80 backdrop-blur">
+            <h3 className="font-bold text-hive-yellow-base flex items-center gap-2 drop-shadow-[0_0_5px_rgba(255,221,0,0.3)]">
+              <MessageSquare size={18} /> Hive Chat
+            </h3>
+            <button
+              onClick={() => setShowSidebar(false)}
+              className="text-gray-400 hover:text-hive-red-neon transition-colors p-1 rounded-full hover:bg-white/5"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Messages Area */}
+          <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 scrollbar-thin scrollbar-thumb-hive-red-neon/30 hover:scrollbar-thumb-hive-red-neon/50">
+            {messages.map((msg) => (
+              <div key={msg.id} className={`flex gap-3 max-w-[85%] ${msg.isMe ? 'self-end flex-row-reverse' : 'self-start'}`}>
+
+                {/* Avatar */}
+                <div className={`
+                  w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold border
+                  ${msg.isMe ? 'bg-hive-yellow-base/10 border-hive-yellow-base text-hive-yellow-base' : 'bg-black/50 border-white/20 text-gray-300'}
+                `}>
+                  {msg.initials}
+                </div>
+
+                {/* Bubble */}
+                <div className="flex flex-col">
+                  {/* Sender Name & Time */}
+                  <div className={`flex items-baseline gap-2 mb-1 ${msg.isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <span className={`text-[10px] uppercase tracking-wider font-bold ${msg.isMe ? 'text-hive-yellow-base' : 'text-gray-400'}`}>
+                      {msg.sender}
+                    </span>
+                    <span className="text-[9px] text-gray-500 font-mono">{msg.time}</span>
+                  </div>
+
+                  {/* Message Content */}
+                  <div className={`
+                    p-3 rounded-2xl text-sm leading-relaxed
+                    ${msg.isMe
+                      ? 'bg-hive-yellow-base text-black rounded-tr-sm shadow-[0_2px_10px_rgba(255,221,0,0.2)]'
+                      : 'bg-black/40 text-gray-200 border border-white/5 rounded-tl-sm'}
+                  `}>
+                    {msg.text}
+                  </div>
+                </div>
+
+              </div>
+            ))}
+          </div>
+
+          {/* Input Area */}
+          <div className="p-4 border-t border-hive-yellow-base/10 bg-hive-card/80 backdrop-blur">
+            <form onSubmit={handleSendMessage} className="bg-black/50 rounded-full flex items-center border border-white/10 p-1 pl-4 focus-within:border-hive-yellow-base/50 focus-within:bg-black transition-all">
+              <input
+                type="text"
+                value={chatMessage}
+                onChange={(e) => setChatMessage(e.target.value)}
+                placeholder="Type your message..."
+                className="bg-transparent border-none outline-none text-sm text-white flex-1 py-2"
+              />
+              <button
+                type="submit"
+                disabled={!chatMessage.trim()}
+                className={`
+                  p-2 rounded-full ml-2 transition-all flex items-center justify-center
+                  ${chatMessage.trim()
+                    ? 'bg-hive-yellow-base text-black hover:bg-hive-yellow-neon hover:shadow-[0_0_15px_rgba(255,221,0,0.4)] hover:scale-105'
+                    : 'text-gray-500 bg-transparent'}
+                `}
+              >
+                <Zap size={16} className={chatMessage.trim() ? 'fill-black' : ''} />
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
-      <div className="p-4 border-t border-white/5">
-        <div className="bg-black/40 rounded-full flex items-center border border-white/10 p-1 px-3">
-          <input type="text" placeholder="Type a message..." className="bg-transparent border-none outline-none text-sm text-white flex-1 py-2" />
-          <button className="text-hive-yellow-base p-1"><Zap size={16} /></button>
-        </div>
-      </div>
-    </div>
-  );
+      </>
+    );
+  };
 
   const renderHomepage = () => (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 relative">
