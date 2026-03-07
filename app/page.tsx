@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useHiveStore, HiveUser } from '../store/useHiveStore';
-import { LogOut, Users, CheckCircle2, Clock, Copy, Hexagon, X, Plus } from 'lucide-react';
+import { LogOut, Users, CheckCircle2, Clock, Copy, Hexagon, X, MessageSquare, Plus } from 'lucide-react';
 
 let socket: Socket;
 
@@ -555,10 +555,10 @@ export default function HiveMindApp() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className={`p-3 rounded-xl border transition-all 
+                className={`p-3 rounded-xl border transition-all
                   ${showSidebar ? 'bg-hive-yellow-base text-black border-hive-yellow-base shadow-[0_0_15px_#ffdd00]' : 'bg-hive-card text-hive-yellow-base border-hive-yellow-base/30 hover:border-hive-yellow-base shadow-sm'}`}
               >
-                <Hexagon size={20} fill={showSidebar ? "currentColor" : "none"} className={showSidebar ? "text-black drop-shadow-sm" : "animate-pulse drop-shadow-[0_0_5px_rgba(255,221,0,0.5)]"} />
+                <MessageSquare size={20} className={showSidebar ? "text-black drop-shadow-sm" : "drop-shadow-[0_0_5px_rgba(255,221,0,0.5)]"} />
               </button>
 
               <div className={`flex items-center gap-2 font-mono text-xl md:text-2xl font-bold px-3 py-2 rounded-xl backdrop-blur ${timeLeft < 30 ? 'text-hive-red-neon bg-hive-red-neon/10 animate-pulse border border-hive-red-neon/30 shadow-[0_0_10px_rgba(255,0,51,0.2)]' : 'text-hive-yellow-base bg-hive-card border border-hive-yellow-base/20 shadow-[0_0_15px_rgba(255,221,0,0.1)]'}`}>
