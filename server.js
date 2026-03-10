@@ -31,7 +31,10 @@ app.prepare().then(() => {
                     users: [],
                     messages: [],
                     phase: 'waiting',
+                    category: 'Movies',
+                    canOthersAdd: true,
                     timeLeft: 180,
+                    options: [],
                     vetoedOption: null,
                     timerInterval: null
                 });
@@ -45,9 +48,29 @@ app.prepare().then(() => {
             socket.emit("chat-history", room.messages);
             socket.emit("state-sync", {
                 phase: room.phase,
+                category: room.category,
+                canOthersAdd: room.canOthersAdd,
                 timeLeft: room.timeLeft,
+                options: room.options,
                 vetoedOption: room.vetoedOption
             });
+        });
+
+        socket.on("update-settings", ({ roomId, category, canOthersAdd }) => {
+            const room = rooms.get(roomId);
+            if (room) {
+                room.category = category;
+                room.canOthersAdd = canOthersAdd;
+                io.to(roomId).emit("settings-updated", { category, canOthersAdd });
+            }
+        });
+
+        socket.on("update-options", ({ roomId, options }) => {
+            const room = rooms.get(roomId);
+            if (room) {
+                room.options = options;
+                io.to(roomId).emit("options-updated", options);
+            }
         });
 
         socket.on("start-voting", ({ roomId }) => {
@@ -55,7 +78,11 @@ app.prepare().then(() => {
             if (!room) return;
 
             room.phase = 'voting';
-            io.to(roomId).emit("phase-change", "voting");
+            io.to(roomId).emit("phase-change", {
+                phase: 'voting',
+                options: room.options,
+                settings: { category: room.category, canOthersAdd: room.canOthersAdd }
+            });
 
             // Start server-side timer if not already running
             if (!room.timerInterval) {
